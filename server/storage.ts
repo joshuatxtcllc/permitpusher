@@ -1,7 +1,11 @@
 import { users, type User, type InsertUser, leads, type Lead, type InsertLead, quickQuotes, type QuickQuote, type InsertQuickQuote } from "@shared/schema";
+import { drizzle } from "drizzle-orm/neon-serverless";
+import { neon, neonConfig } from "@neondatabase/serverless";
+import * as schema from "../shared/schema";
+import "dotenv/config";
 
-// modify the interface with any CRUD methods
-// you might need
+// Required for the Neon serverless driver
+neonConfig.fetchConnectionCache = true;
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -15,6 +19,58 @@ export interface IStorage {
   // Quick Quote methods
   createQuickQuote(quote: InsertQuickQuote): Promise<QuickQuote>;
   getAllQuickQuotes(): Promise<QuickQuote[]>;
+}
+
+// Create PostgreSQL client
+const sql = process.env.DATABASE_URL ? neon(process.env.DATABASE_URL) : undefined;
+const db = sql ? drizzle(sql, { schema }) : undefined;
+
+export class PostgresStorage implements IStorage {
+  async getUser(id: number): Promise<User | undefined> {
+    if (!db) throw new Error("Database connection not established");
+    const users = await db.select().from(schema.users).where(({ eq }) => eq(schema.users.id, id));
+    return users[0];
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    if (!db) throw new Error("Database connection not established");
+    const users = await db.select().from(schema.users).where(({ eq }) => eq(schema.users.username, username));
+    return users[0];
+  }
+  
+  async createUser(insertUser: InsertUser): Promise<User> {
+    if (!db) throw new Error("Database connection not established");
+    const newUsers = await db.insert(schema.users).values(insertUser).returning();
+    return newUsers[0];
+  }
+  
+  async createLead(insertLead: InsertLead): Promise<Lead> {
+    if (!db) throw new Error("Database connection not established");
+    const newLeads = await db.insert(schema.leads).values({
+      ...insertLead,
+      createdAt: new Date()
+    }).returning();
+    return newLeads[0];
+  }
+  
+  async getAllLeads(): Promise<Lead[]> {
+    if (!db) throw new Error("Database connection not established");
+    return await db.select().from(schema.leads).orderBy(({ desc }) => [desc(schema.leads.createdAt)]);
+  }
+  
+  async createQuickQuote(insertQuickQuote: InsertQuickQuote): Promise<QuickQuote> {
+    if (!db) throw new Error("Database connection not established");
+    const newQuotes = await db.insert(schema.quickQuotes).values({
+      ...insertQuickQuote,
+      createdAt: new Date()
+    }).returning();
+    return newQuotes[0];
+  }
+  
+  async getAllQuickQuotes(): Promise<QuickQuote[]> {
+    if (!db) throw new Error("Database connection not established");
+    return await db.select().from(schema.quickQuotes).orderBy(({ desc }) => [desc(schema.quickQuotes.createdAt)]);
+  }
 }
 
 export class MemStorage implements IStorage {
@@ -84,4 +140,7 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Use PostgreSQL storage if DATABASE_URL is available, otherwise use memory storage
+export const storage = process.env.DATABASE_URL 
+  ? new PostgresStorage() 
+  : new MemStorage();
