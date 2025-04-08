@@ -52,7 +52,7 @@ export default function Hero() {
             <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
               <button
                 onClick={() => handleNavClick("contact")}
-                className="bg-secondary hover:bg-secondary/80 text-white font-bold py-3 px-6 rounded-md transition duration-300 text-center shadow-lg"
+                className="bg-secondary hover:bg-secondary/80 text-neutral-900 font-bold py-3 px-6 rounded-md transition duration-300 text-center shadow-lg"
               >
                 Get Your Permit Fast
               </button>
