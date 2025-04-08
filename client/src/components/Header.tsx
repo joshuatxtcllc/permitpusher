@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { scrollToElement } from "@/lib/utils";
+import { Link } from "wouter";
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

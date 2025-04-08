@@ -1,4 +1,5 @@
 import { scrollToElement } from "@/lib/utils";
+import { Link } from "wouter";
 
 export default function Footer() {
   const handleNavClick = (id: string) => {
@@ -176,6 +177,9 @@ export default function Footer() {
             <button className="hover:text-white transition-colors duration-300">
               Sitemap
             </button>
+            <Link href="/admin" className="hover:text-white transition-colors duration-300">
+              Admin
+            </Link>
           </div>
         </div>
       </div>
