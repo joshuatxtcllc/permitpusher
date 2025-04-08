@@ -10,12 +10,30 @@ export default function HowItWorks() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-primary font-heading mb-4">
-            How Our Permit Rush Process Works
+            Revolutionary AI-Powered Permit Rush Process
           </h2>
-          <p className="text-lg text-neutral-600 max-w-3xl mx-auto">
-            We've streamlined the complex permitting process to save you time and
-            money while ensuring compliance with all Houston regulations.
+          <p className="text-lg text-neutral-600 max-w-3xl mx-auto mb-4">
+            Our proprietary AI Permit Processor utilizes advanced machine learning algorithms to analyze 
+            millions of public records, historical permit data, and regulatory patterns in milliseconds,
+            delivering unprecedented speed and compliance accuracy.
           </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto mb-8">
+            <div className="bg-primary/10 text-primary rounded-lg p-3">
+              <div className="font-bold text-2xl mb-1">10x</div>
+              <div className="text-sm">Faster than traditional methods</div>
+            </div>
+            <div className="bg-primary/10 text-primary rounded-lg p-3">
+              <div className="font-bold text-2xl mb-1">97%</div>
+              <div className="text-sm">First-time approval rate</div>
+            </div>
+            <div className="bg-primary/10 text-primary rounded-lg p-3">
+              <div className="font-bold text-2xl mb-1">24/7</div>
+              <div className="text-sm">Continuous AI optimization</div>
+            </div>
+          </div>
+          <div className="inline-block bg-secondary/10 text-secondary font-semibold px-4 py-2 rounded-md">
+            <span className="font-bold">PROPRIETARY NEURAL NETWORK</span> • Trained on 500,000+ Houston permits
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -25,11 +43,11 @@ export default function HowItWorks() {
               1
             </div>
             <h3 className="text-xl font-bold text-primary font-heading mb-2">
-              Consultation
+              AI Analysis
             </h3>
             <p className="text-neutral-600">
-              We assess your project requirements and determine the exact permits
-              needed for compliance in Houston.
+              Our AI instantly analyzes your project and searches millions of records to 
+              identify all required permits and potential compliance issues.
             </p>
           </div>
 
@@ -39,11 +57,11 @@ export default function HowItWorks() {
               2
             </div>
             <h3 className="text-xl font-bold text-primary font-heading mb-2">
-              Documentation
+              Smart Documentation
             </h3>
             <p className="text-neutral-600">
-              Our experts prepare all required paperwork, plans, and supporting
-              documents to meet city requirements.
+              Our AI Processor automatically prepares all required documentation 
+              in perfect compliance with the latest Houston regulations.
             </p>
           </div>
 
@@ -53,11 +71,11 @@ export default function HowItWorks() {
               3
             </div>
             <h3 className="text-xl font-bold text-primary font-heading mb-2">
-              Submission
+              Expedited Submission
             </h3>
             <p className="text-neutral-600">
-              We submit your application through our fast-track channels and
-              monitor its progress through the system.
+              Our system identifies optimal submission pathways and leverages fast-track 
+              channels for the quickest possible processing.
             </p>
           </div>
 
@@ -67,11 +85,11 @@ export default function HowItWorks() {
               4
             </div>
             <h3 className="text-xl font-bold text-primary font-heading mb-2">
-              Approval
+              Rapid Approval
             </h3>
             <p className="text-neutral-600">
-              We deliver your approved permits and provide guidance on next steps
-              for your project.
+              Our AI-optimized submissions achieve record-breaking approval times, 
+              getting your projects moving faster than ever before.
             </p>
           </div>
         </div>
@@ -87,18 +105,22 @@ export default function HowItWorks() {
             </div>
             <div>
               <h3 className="text-xl font-bold text-primary font-heading mb-2">
-                Why Choose Our Fast-Track Service?
+                Why Our AI Permit Processor Outperforms Competition
               </h3>
-              <p className="text-neutral-600 mb-4">
-                Our specialized knowledge of Houston's permit system and
-                established relationships with city departments allow us to
-                expedite your permits when others can't.
+              <p className="text-neutral-600 mb-3">
+                Our proprietary AI technology analyzes hundreds of thousands of public records
+                and permit applications to identify approval patterns and optimize your submission.
               </p>
+              <ul className="text-neutral-600 mb-4 list-disc list-inside space-y-1">
+                <li><span className="font-semibold">Lightning-fast processing</span> - AI completes in seconds what takes humans days</li>
+                <li><span className="font-semibold">Unmatched accuracy</span> - Our system learns from millions of successful permits</li> 
+                <li><span className="font-semibold">Continuous optimization</span> - AI constantly improves through machine learning</li>
+              </ul>
               <button
                 onClick={() => handleNavClick("contact")}
                 className="inline-block bg-secondary hover:bg-secondary/80 text-white font-medium py-2 px-6 rounded-md transition duration-300"
               >
-                Start Your Project Now
+                Experience AI-Powered Permitting
               </button>
             </div>
           </div>

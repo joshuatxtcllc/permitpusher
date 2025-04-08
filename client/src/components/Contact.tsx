@@ -80,11 +80,24 @@ export default function Contact() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           <div>
             <h2 className="text-3xl md:text-4xl font-bold text-primary font-heading mb-4">
-              Get Started Today
+              Access Our AI Permit System
             </h2>
+            <div className="flex items-center bg-primary/10 rounded-md p-3 mb-4">
+              <div className="mr-3 bg-primary/20 rounded-full p-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
+                  <rect width="18" height="10" x="3" y="11" rx="2" />
+                  <circle cx="12" cy="5" r="2" />
+                  <path d="M12 7v4" />
+                  <line x1="8" x2="8" y1="16" y2="16" />
+                  <line x1="16" x2="16" y1="16" y2="16" />
+                </svg>
+              </div>
+              <span className="text-sm text-primary font-medium">Your information will be analyzed by our AI system for optimal permit strategy</span>
+            </div>
             <p className="text-lg text-neutral-600 mb-8">
-              Fill out our qualification form to see if your project is a good fit for
-              our rush permit services or to discuss your personal injury case.
+              Complete this form to have our AI Permit Processor analyze your project requirements
+              and determine the optimal permitting strategy. Our neural network will assess historical 
+              approval patterns to maximize your success rate.
             </p>
 
             <Form {...form}>
@@ -317,10 +330,25 @@ export default function Contact() {
 
                 <Button
                   type="submit"
-                  className="w-full bg-secondary hover:bg-secondary/80 text-white font-bold"
+                  className="w-full bg-secondary hover:bg-secondary/80 text-white font-bold relative overflow-hidden"
                   disabled={mutation.isPending || !serviceType}
                 >
-                  {mutation.isPending ? "Submitting..." : "Submit Request"}
+                  {mutation.isPending ? 
+                    <span className="flex items-center justify-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      AI Processing...
+                    </span> : 
+                    <span className="flex items-center justify-center">
+                      <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M14 4h-4v4h-4v4h4v4h4v-4h4v-4h-4z"></path>
+                        <rect width="18" height="18" x="3" y="3" rx="2"></rect>
+                      </svg>
+                      Start AI Permit Analysis
+                    </span>
+                  }
                 </Button>
               </form>
             </Form>
@@ -421,17 +449,45 @@ export default function Contact() {
               </div>
             </div>
 
-            <div className="bg-primary rounded-lg shadow-md p-8 text-white">
-              <h3 className="text-xl font-bold font-heading mb-4">
-                Emergency Permit Needs?
-              </h3>
-              <p className="mb-6">
-                For urgent permit situations that require immediate attention, call
-                our emergency hotline. We offer same-day consultations for critical
-                cases.
-              </p>
-              <div className="bg-white text-primary rounded-lg p-4 font-bold text-xl text-center">
-                (713) 555-9111
+            <div className="bg-primary rounded-lg shadow-md p-8 text-white relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 -mt-8 -mr-8 opacity-10">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                  <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M7.5 12H16.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M12.5 7.5L12.5 16.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M4 12C4 12 7 8 12 8C17 8 20 12 20 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M21 7L19 9.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M3 7L5 9.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <div className="relative z-10">
+                <div className="flex items-center mb-2">
+                  <h3 className="text-xl font-bold font-heading mr-2">
+                    AI-Priority Emergency Service
+                  </h3>
+                  <span className="bg-secondary text-white text-xs rounded-full px-2 py-1">ULTRA-FAST</span>
+                </div>
+                <p className="mb-4">
+                  Our AI system offers a premium emergency processing track with dedicated neural network resources
+                  for time-critical permits. Get 24-48 hour turnarounds on permits that normally take weeks.
+                </p>
+                <div className="bg-white/10 rounded-lg p-3 mb-4 backdrop-blur-sm">
+                  <div className="text-sm flex items-center">
+                    <span className="text-secondary mr-2">✓</span> Advanced pattern matching for fastest approvals
+                  </div>
+                  <div className="text-sm flex items-center">
+                    <span className="text-secondary mr-2">✓</span> Priority processing in our neural network
+                  </div>
+                  <div className="text-sm flex items-center">
+                    <span className="text-secondary mr-2">✓</span> Direct access to our AI engineers
+                  </div>
+                </div>
+                <div className="bg-white text-primary rounded-lg p-4 font-bold text-xl text-center flex items-center justify-center">
+                  <svg className="mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"></path>
+                  </svg>
+                  (713) 555-9111
+                </div>
               </div>
             </div>
           </div>
