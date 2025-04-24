@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "wouter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -310,7 +311,21 @@ export default function CrmDashboard() {
 
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-6">CRM Dashboard</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">CRM Dashboard</h1>
+        <div className="flex gap-2">
+          <Link href="/admin">
+            <Button variant="outline">
+              Back to Admin
+            </Button>
+          </Link>
+          <Link href="/">
+            <Button variant="outline">
+              Back to Site
+            </Button>
+          </Link>
+        </div>
+      </div>
       
       <div className="mb-6 flex items-center justify-between">
         <div>
