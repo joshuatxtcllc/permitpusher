@@ -188,17 +188,59 @@ export default function PermitApplication() {
     },
   });
 
-  // Mock API call for form submission
+  // Process application data when it's fetched
+  useEffect(() => {
+    if (applicationData) {
+      setPermitApplication(applicationData.application);
+      
+      // If the application has documents, update our local state
+      if (applicationData.application.documents.length > 0) {
+        setUploadedFiles(applicationData.application.documents);
+      }
+      
+      // When documents are being processed, check more frequently
+      const documentsProcessing = applicationData.application.documents.some(
+        doc => doc.status === "analyzing" || doc.status === "pending"
+      );
+      
+      if (documentsProcessing) {
+        setIsAnalyzing(true);
+        // Refetch to check progress
+        setTimeout(() => refetchApplication(), 3000);
+      } else {
+        setIsAnalyzing(false);
+      }
+      
+      // If the application status changes, show a toast notification
+      if (permitApplication && permitApplication.status !== applicationData.application.status) {
+        toast({
+          title: "Application Status Updated",
+          description: `Your application status is now: ${applicationData.application.status.replace(/_/g, " ")}`,
+        });
+      }
+    }
+  }, [applicationData, permitApplication]);
+
+  // API call for form submission
   const submitApplicationMutation = useMutation({
     mutationFn: (data: PermitApplicationFormData) => {
       return apiRequest("POST", "/api/permit-applications", data);
     },
-    onSuccess: () => {
+    onSuccess: (response) => {
       toast({
-        title: "Application Submitted",
-        description: "Your permit application has been successfully submitted.",
+        title: "Application Created",
+        description: "Your permit application has been created. Now you can upload the required documents.",
       });
-      form.reset();
+      
+      // Store the application ID and update the state
+      setApplicationId(response.applicationId);
+      setPermitApplication(response.application);
+      
+      // Move to the documents tab
+      setActiveTab("documents");
+      
+      // Setup processing step
+      setProcessingStep(2);
     },
     onError: (error) => {
       toast({
@@ -214,71 +256,106 @@ export default function PermitApplication() {
     submitApplicationMutation.mutate(data);
   }
 
-  // File upload handler
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!event.target.files || event.target.files.length === 0) return;
-
-    const newFiles: UploadedFile[] = Array.from(event.target.files).map((file) => ({
-      name: file.name,
-      size: file.size,
-      type: file.type,
-      status: "pending",
-    }));
-
-    setUploadedFiles([...uploadedFiles, ...newFiles]);
-
-    // Start "AI analysis" for the newly uploaded files
-    simulateAIAnalysis(uploadedFiles.length, newFiles.length);
-  };
-
-  // Mock AI analysis function
-  const simulateAIAnalysis = (startIndex: number, count: number) => {
-    setIsAnalyzing(true);
-
-    // Update status to "analyzing" for newly uploaded files
-    setUploadedFiles((prevFiles) => {
-      const updatedFiles = [...prevFiles];
-      for (let i = startIndex; i < startIndex + count; i++) {
-        if (updatedFiles[i]) {
-          updatedFiles[i].status = "analyzing";
-        }
-      }
-      return updatedFiles;
-    });
-
-    // Simulate analysis completion after a delay
-    setTimeout(() => {
-      setUploadedFiles((prevFiles) => {
-        const updatedFiles = [...prevFiles];
-        for (let i = startIndex; i < startIndex + count; i++) {
-          if (updatedFiles[i]) {
-            // Randomly assign success or error for demo purposes
-            const isSuccess = Math.random() > 0.2; // 80% success rate
-            updatedFiles[i].status = isSuccess ? "success" : "error";
-
-            // Add analysis feedback
-            if (isSuccess) {
-              const fileType = updatedFiles[i].type;
-              if (fileType.includes("image") || fileType.includes("pdf")) {
-                updatedFiles[i].analysis = "Document appears to be a valid architectural drawing. All required elements are present.";
-              } else {
-                updatedFiles[i].analysis = "File format recognized. Content appears to meet submission requirements.";
-              }
-            } else {
-              updatedFiles[i].analysis = "This document may be missing required elements. Please ensure it includes all necessary details for permit approval.";
-            }
-          }
-        }
-        return updatedFiles;
-      });
-
-      setIsAnalyzing(false);
+  // Document upload mutation
+  const uploadDocumentMutation = useMutation({
+    mutationFn: async (file: File) => {
+      if (!applicationId || !selectedDocumentType) return null;
+      
+      // In a real app, we would upload the file to a server
+      // Here we're just simulating the upload with the file metadata
+      const fileData = {
+        documentType: selectedDocumentType,
+        fileName: file.name,
+        mimeType: file.type,
+        fileSize: file.size
+      };
+      
+      return apiRequest("POST", `/api/permit-applications/${applicationId}/documents`, fileData);
+    },
+    onSuccess: (response, file) => {
+      if (!response) return;
       
       toast({
-        title: "Analysis Complete",
-        description: "AI analysis of your documents has been completed.",
+        title: "Document Uploaded",
+        description: "Your document was uploaded successfully and is being analyzed by our AI system.",
       });
-    }, 3000); // 3 second delay to simulate processing
+      
+      // Add the file to our local state temporarily
+      const newFile: UploadedFile = {
+        documentId: response.documentId,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        documentType: selectedDocumentType || undefined,
+        status: "analyzing",
+      };
+      
+      setUploadedFiles(prev => [...prev, newFile]);
+      
+      // Refetch the application to get the updated document list with analysis
+      setTimeout(() => refetchApplication(), 2000);
+      
+      // Reset the selected document type
+      setSelectedDocumentType(null);
+    },
+    onError: (error) => {
+      toast({
+        title: "Upload Failed",
+        description: error.message || "There was an error uploading your document. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Document resubmission mutation
+  const resubmitDocumentMutation = useMutation({
+    mutationFn: async ({ documentId, file }: { documentId: string, file: File }) => {
+      if (!applicationId) return null;
+      
+      // In a real app, we would upload the file to a server
+      // Here we're just simulating the upload with the file metadata
+      const fileData = {
+        fileName: file.name,
+        mimeType: file.type,
+        fileSize: file.size
+      };
+      
+      return apiRequest("PUT", `/api/permit-applications/${applicationId}/documents/${documentId}`, fileData);
+    },
+    onSuccess: (response) => {
+      if (!response) return;
+      
+      toast({
+        title: "Document Resubmitted",
+        description: "Your updated document was submitted successfully and is being analyzed by our AI system.",
+      });
+      
+      // Refetch the application to get the updated document list with analysis
+      setTimeout(() => refetchApplication(), 2000);
+    },
+    onError: (error) => {
+      toast({
+        title: "Resubmission Failed",
+        description: error.message || "There was an error resubmitting your document. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // File upload handler
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files || event.target.files.length === 0 || !selectedDocumentType) return;
+    
+    const file = event.target.files[0];
+    uploadDocumentMutation.mutate(file);
+  };
+  
+  // Document resubmission handler
+  const handleDocumentResubmit = (documentId: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files || event.target.files.length === 0) return;
+    
+    const file = event.target.files[0];
+    resubmitDocumentMutation.mutate({ documentId, file });
   };
 
   // Format file size for display
