@@ -43,12 +43,7 @@ export default function Header() {
             >
               How It Works
             </button>
-            <button
-              onClick={() => handleNavClick("personal-injury")}
-              className="text-neutral-700 hover:text-primary transition"
-            >
-              Personal Injury
-            </button>
+
             <button
               onClick={() => handleNavClick("testimonials")}
               className="text-neutral-700 hover:text-primary transition"
@@ -135,12 +130,7 @@ export default function Header() {
           >
             How It Works
           </button>
-          <button
-            onClick={() => handleNavClick("personal-injury")}
-            className="text-neutral-700 hover:text-primary transition py-2 px-3 font-medium text-left"
-          >
-            Personal Injury
-          </button>
+
           <button
             onClick={() => handleNavClick("testimonials")}
             className="text-neutral-700 hover:text-primary transition py-2 px-3 font-medium text-left"
