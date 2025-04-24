@@ -52,6 +52,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(400).json({ success: false, error: (error as Error).message });
     }
   });
+  
+  // Permit application submission endpoint
+  app.post("/api/permit-applications", async (req, res) => {
+    try {
+      // For now, we'll just accept any data structure since we don't have a formal schema yet
+      // In a production app, we would validate this data with a schema
+      const applicationData = req.body;
+      
+      // Mock successful response
+      res.status(201).json({ 
+        success: true, 
+        message: "Permit application received successfully",
+        applicationId: Date.now(), // Generate a mock ID
+        submittedAt: new Date().toISOString()
+      });
+    } catch (error) {
+      res.status(400).json({ success: false, error: (error as Error).message });
+    }
+  });
 
   // === CRM ROUTES ===
   

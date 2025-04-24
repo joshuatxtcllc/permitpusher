@@ -8,6 +8,8 @@ import FAQ from "@/components/FAQ";
 import Contact from "@/components/Contact";
 import CallToAction from "@/components/CallToAction";
 import Footer from "@/components/Footer";
+import MunicodeTools from "@/components/MunicodeTools";
+import PermitApplication from "@/components/PermitApplication";
 
 export default function Home() {
   return (
@@ -17,6 +19,8 @@ export default function Home() {
         <Hero />
         <Services />
         <HowItWorks />
+        <MunicodeTools />
+        <PermitApplication />
         <PersonalInjury />
         <Testimonials />
         <FAQ />

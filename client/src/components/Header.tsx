@@ -24,7 +24,7 @@ export default function Header() {
           <div className="flex items-center">
             <a href="#" className="flex items-center">
               <span className="text-2xl font-bold text-primary font-heading">
-                City Permit <span className="text-secondary">Rush</span>
+                City Permit <span className="text-neutral-800">RUSH</span>
               </span>
             </a>
           </div>
