@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
 import {
@@ -35,7 +35,28 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiRequest } from "@/lib/queryClient";
-import { AlertCircle, CheckCircle2, FileUp, Upload } from "lucide-react";
+import { 
+  AlertCircle, 
+  CheckCircle2, 
+  FileUp, 
+  Upload, 
+  AlertTriangle, 
+  Clock, 
+  RefreshCw,
+  Info,
+  ExternalLink,
+  ArrowRight,
+  DownloadCloud
+} from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 // Form schema for permit application
 const permitApplicationSchema = z.object({
@@ -54,13 +75,79 @@ const permitApplicationSchema = z.object({
 
 type PermitApplicationFormData = z.infer<typeof permitApplicationSchema>;
 
+// Application statuses
+enum ApplicationStatus {
+  DRAFT = "draft",
+  DOCUMENTS_PENDING = "documents_pending",
+  DOCUMENTS_UPLOADED = "documents_uploaded",
+  UNDER_REVIEW = "under_review",
+  NEEDS_CORRECTION = "needs_correction",
+  READY_FOR_APPROVAL = "ready_for_approval", 
+  APPROVED = "approved",
+  DENIED = "denied"
+}
+
+// Document analysis status
+enum DocumentAnalysisStatus {
+  PENDING = "pending",
+  PROCESSING = "processing",
+  APPROVED = "approved",
+  REJECTED = "rejected",
+  NEEDS_CORRECTION = "needs_correction"
+}
+
+// Document types that may be required
+enum DocumentType {
+  ARCHITECTURAL_DRAWING = "architectural_drawing",
+  SITE_PLAN = "site_plan",
+  STRUCTURAL_PLANS = "structural_plans",
+  ELECTRICAL_PLANS = "electrical_plans",
+  PLUMBING_PLANS = "plumbing_plans",
+  MECHANICAL_PLANS = "mechanical_plans",
+  PROPERTY_SURVEY = "property_survey",
+  PLOT_PLAN = "plot_plan",
+  CONSTRUCTION_DETAILS = "construction_details",
+  ENERGY_CALCULATIONS = "energy_calculations",
+  PERMIT_APPLICATION_FORM = "permit_application_form",
+  PROPERTY_DEED = "property_deed",
+  CONTRACTOR_LICENSE = "contractor_license",
+  HOMEOWNER_ID = "homeowner_id",
+  OTHER = "other"
+}
+
 // File upload type
 type UploadedFile = {
+  documentId?: string;
   name: string;
   size: number;
   type: string;
   status: "pending" | "analyzing" | "success" | "error";
+  documentType?: DocumentType;
   analysis?: string;
+  issues?: Array<{
+    severity: "critical" | "major" | "minor" | "info";
+    location?: string;
+    description: string;
+    recommendation?: string;
+  }>;
+  uploadTimestamp?: Date;
+  confidence?: number;
+};
+
+// Permit application type
+type PermitApplicationState = {
+  id?: string;
+  status: ApplicationStatus;
+  documents: UploadedFile[];
+  requiredDocuments: DocumentType[];
+  aiComments: Array<{
+    timestamp: Date;
+    message: string;
+  }>;
+  missingItems: string[];
+  applicationComplete: boolean;
+  readyForHumanReview: boolean;
+  nextSteps: string[];
 };
 
 export default function PermitApplication() {
@@ -68,6 +155,22 @@ export default function PermitApplication() {
   const [activeTab, setActiveTab] = useState("application");
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [applicationId, setApplicationId] = useState<string | null>(null);
+  const [permitApplication, setPermitApplication] = useState<PermitApplicationState | null>(null);
+  const [selectedDocumentType, setSelectedDocumentType] = useState<DocumentType | null>(null);
+  const [processingStep, setProcessingStep] = useState(1);
+  
+  // Fetch application status if we have an ID
+  const { data: applicationData, refetch: refetchApplication } = useQuery({
+    queryKey: ['permit-application', applicationId],
+    queryFn: async () => {
+      if (!applicationId) return null;
+      const response = await apiRequest('GET', `/api/permit-applications/${applicationId}`);
+      return response;
+    },
+    enabled: !!applicationId,
+    refetchInterval: 5000, // Poll every 5 seconds when documents are being analyzed
+  });
 
   // Form submission handler
   const form = useForm<PermitApplicationFormData>({
