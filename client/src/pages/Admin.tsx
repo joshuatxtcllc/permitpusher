@@ -99,6 +99,11 @@ export default function Admin() {
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Site
             </Button>
           </Link>
+          <Link href="/crm">
+            <Button variant="secondary">
+              CRM Dashboard
+            </Button>
+          </Link>
           <Button 
             variant="outline" 
             onClick={() => {
