@@ -13,6 +13,15 @@ import {
   updateCrmQuickQuote,
   CrmLeadStatus
 } from "./crm";
+import { 
+  createPermitApplication, 
+  getPermitApplication, 
+  getAllPermitApplications,
+  addDocumentToApplication,
+  resubmitDocument,
+  DocumentType,
+  generateNextSteps
+} from "./permitAI";
 import { z } from "zod";
 
 // Simple auth middleware for admin routes - would be more robust in production
@@ -53,19 +62,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Permit application submission endpoint
+  // Enhanced AI-powered permit application endpoints
+  
+  // Create a new permit application
   app.post("/api/permit-applications", async (req, res) => {
     try {
-      // For now, we'll just accept any data structure since we don't have a formal schema yet
-      // In a production app, we would validate this data with a schema
       const applicationData = req.body;
+      const application = createPermitApplication(applicationData);
       
-      // Mock successful response
       res.status(201).json({ 
         success: true, 
-        message: "Permit application received successfully",
-        applicationId: Date.now(), // Generate a mock ID
-        submittedAt: new Date().toISOString()
+        message: "Permit application created successfully",
+        applicationId: application.id,
+        application,
+        requiredDocuments: application.requiredDocuments,
+        nextSteps: generateNextSteps(application.id)
+      });
+    } catch (error) {
+      res.status(400).json({ success: false, error: (error as Error).message });
+    }
+  });
+  
+  // Get permit application status
+  app.get("/api/permit-applications/:id", async (req, res) => {
+    try {
+      const applicationId = req.params.id;
+      const application = getPermitApplication(applicationId);
+      
+      if (!application) {
+        return res.status(404).json({ success: false, error: "Application not found" });
+      }
+      
+      res.status(200).json({
+        success: true,
+        application,
+        nextSteps: generateNextSteps(application.id)
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, error: (error as Error).message });
+    }
+  });
+  
+  // Get all permit applications (admin endpoint)
+  app.get("/api/permit-applications", authMiddleware, async (req, res) => {
+    try {
+      const applications = getAllPermitApplications();
+      res.status(200).json({ success: true, applications });
+    } catch (error) {
+      res.status(500).json({ success: false, error: (error as Error).message });
+    }
+  });
+  
+  // Document upload endpoint
+  app.post("/api/permit-applications/:id/documents", async (req, res) => {
+    try {
+      const applicationId = req.params.id;
+      const { documentType, fileName, mimeType, fileSize } = req.body;
+      
+      // Validate input
+      const docType = documentType as DocumentType;
+      
+      // In a real application, we would handle file upload here
+      // For this demo, we're just simulating document processing
+      
+      const document = addDocumentToApplication(
+        applicationId,
+        docType,
+        fileName,
+        mimeType,
+        fileSize
+      );
+      
+      if (!document) {
+        return res.status(404).json({ success: false, error: "Application not found" });
+      }
+      
+      res.status(201).json({
+        success: true,
+        message: "Document uploaded successfully. AI analysis in progress...",
+        documentId: document.documentId,
+        status: document.status
+      });
+    } catch (error) {
+      res.status(400).json({ success: false, error: (error as Error).message });
+    }
+  });
+  
+  // Document resubmission endpoint
+  app.put("/api/permit-applications/:applicationId/documents/:documentId", async (req, res) => {
+    try {
+      const { applicationId, documentId } = req.params;
+      const { fileName, mimeType, fileSize } = req.body;
+      
+      // In a real application, we would handle file upload here
+      // For this demo, we're just simulating document processing
+      
+      const document = resubmitDocument(
+        applicationId,
+        documentId,
+        fileName,
+        mimeType,
+        fileSize
+      );
+      
+      if (!document) {
+        return res.status(404).json({ success: false, error: "Application or document not found" });
+      }
+      
+      res.status(200).json({
+        success: true,
+        message: "Document resubmitted successfully. AI analysis in progress...",
+        documentId: document.documentId,
+        status: document.status
       });
     } catch (error) {
       res.status(400).json({ success: false, error: (error as Error).message });
@@ -174,10 +282,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Handle date conversion if provided
       if (updateData.lastContactDate) {
-        updateData.lastContactDate = new Date(updateData.lastContactDate);
+        const lastContactDate = new Date(updateData.lastContactDate);
+        updateData.lastContactDate = lastContactDate as any;
       }
       
-      const updated = updateCrmLead(id, updateData);
+      const updated = updateCrmLead(id, updateData as any);
       if (!updated) {
         return res.status(404).json({ error: "Lead not found" });
       }
@@ -216,10 +325,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Handle date conversion if provided
       if (updateData.lastContactDate) {
-        updateData.lastContactDate = new Date(updateData.lastContactDate);
+        const lastContactDate = new Date(updateData.lastContactDate);
+        updateData.lastContactDate = lastContactDate as any;
       }
       
-      const updated = updateCrmQuickQuote(id, updateData);
+      const updated = updateCrmQuickQuote(id, updateData as any);
       if (!updated) {
         return res.status(404).json({ error: "Quick quote not found" });
       }
