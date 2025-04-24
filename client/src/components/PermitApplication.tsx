@@ -46,7 +46,9 @@ import {
   Info,
   ExternalLink,
   ArrowRight,
-  DownloadCloud
+  DownloadCloud,
+  MessageSquare,
+  XCircle
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -582,117 +584,402 @@ export default function PermitApplication() {
               </TabsContent>
               
               <TabsContent value="documents" className="pt-6">
-                <div className="space-y-6">
-                  <div className="border-2 border-dashed rounded-lg p-10 text-center border-neutral-300 bg-neutral-50">
-                    <div className="flex flex-col items-center">
-                      <FileUp className="h-10 w-10 text-neutral-400 mb-4" />
-                      <h3 className="text-lg font-medium mb-2">Upload Documents</h3>
-                      <p className="text-neutral-500 mb-4 max-w-md">
-                        Upload architectural drawings, site plans, and supporting documents. Our AI will analyze them for compliance with building codes.
-                      </p>
-                      <Input
-                        type="file"
-                        className="hidden"
-                        id="file-upload"
-                        multiple
-                        onChange={handleFileUpload}
-                      />
-                      <label htmlFor="file-upload">
-                        <div className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 cursor-pointer">
-                          <Upload className="mr-2 h-4 w-4" /> Select Files
+                {!applicationId ? (
+                  // Step 1: Need to create application first
+                  <div className="space-y-4">
+                    <Alert className="bg-blue-50 border-blue-200">
+                      <Info className="h-4 w-4 text-blue-600" />
+                      <AlertTitle>Complete the application form first</AlertTitle>
+                      <AlertDescription>
+                        Please complete and submit the application form before uploading documents. Our AI system will analyze which documents you need to provide.
+                      </AlertDescription>
+                    </Alert>
+                    
+                    <div className="flex justify-center">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={() => setActiveTab("application")}
+                      >
+                        Go to Application Form
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {/* Application Status and Progress */}
+                    {permitApplication && (
+                      <div className="mb-6">
+                        <div className="flex justify-between items-center mb-2">
+                          <h3 className="text-lg font-medium">Application Status</h3>
+                          <Badge 
+                            variant="outline" 
+                            className={
+                              permitApplication.status === ApplicationStatus.READY_FOR_APPROVAL ? "bg-green-50 text-green-700" :
+                              permitApplication.status === ApplicationStatus.NEEDS_CORRECTION ? "bg-amber-50 text-amber-700" :
+                              "bg-blue-50 text-blue-700"
+                            }
+                          >
+                            {permitApplication.status.replace(/_/g, " ")}
+                          </Badge>
                         </div>
-                      </label>
-                      <p className="text-xs text-neutral-400 mt-2">
-                        Supports PDF, JPG, PNG, DWG, and other common file formats up to 25MB
-                      </p>
-                    </div>
-                  </div>
-
-                  {isAnalyzing && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-md p-4 text-blue-700">
-                      <p className="flex items-center">
-                        <svg className="animate-spin h-4 w-4 mr-2 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        AI is analyzing your documents. This usually takes 10-30 seconds per file.
-                      </p>
-                    </div>
-                  )}
-                  
-                  {uploadedFiles.length > 0 && (
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium">Uploaded Documents</h3>
-                      
-                      <div className="border rounded-md divide-y">
-                        {uploadedFiles.map((file, index) => (
-                          <div key={index} className="p-4">
-                            <div className="flex items-start justify-between">
-                              <div className="flex items-start space-x-3">
-                                <div>
-                                  {file.status === "analyzing" ? (
-                                    <div className="h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center">
-                                      <svg className="animate-spin h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                      </svg>
-                                    </div>
-                                  ) : file.status === "success" ? (
-                                    <CheckCircle2 className="h-6 w-6 text-green-600" />
-                                  ) : file.status === "error" ? (
-                                    <AlertCircle className="h-6 w-6 text-red-600" />
-                                  ) : (
-                                    <div className="h-6 w-6 rounded-full border border-neutral-300" />
-                                  )}
+                        
+                        {/* Progress steps */}
+                        <Progress 
+                          value={
+                            permitApplication.status === ApplicationStatus.DRAFT ? 25 :
+                            permitApplication.status === ApplicationStatus.DOCUMENTS_PENDING ? 50 :
+                            permitApplication.status === ApplicationStatus.NEEDS_CORRECTION ? 75 :
+                            permitApplication.status === ApplicationStatus.READY_FOR_APPROVAL ? 90 :
+                            permitApplication.status === ApplicationStatus.APPROVED ? 100 : 50
+                          } 
+                          className="h-2 mb-4" 
+                        />
+                        
+                        {/* AI comments/messages */}
+                        {permitApplication.aiComments && permitApplication.aiComments.length > 0 && (
+                          <div className="mb-4 border rounded-md p-4 bg-neutral-50">
+                            <h4 className="text-sm font-medium mb-2 flex items-center">
+                              <MessageSquare className="h-4 w-4 mr-2 text-primary" />
+                              AI Assistant Messages
+                            </h4>
+                            <div className="space-y-3 max-h-32 overflow-y-auto">
+                              {permitApplication.aiComments.map((comment, idx) => (
+                                <div key={idx} className="text-sm pb-2 border-b border-neutral-100 last:border-0">
+                                  <span className="text-xs text-neutral-500">
+                                    {new Date(comment.timestamp).toLocaleString()}
+                                  </span>
+                                  <p>{comment.message}</p>
                                 </div>
-                                <div>
-                                  <p className="font-medium">{file.name}</p>
-                                  <p className="text-sm text-neutral-500">{formatFileSize(file.size)}</p>
-                                </div>
-                              </div>
-                              <Badge
-                                variant={
-                                  file.status === "analyzing" ? "outline" :
-                                  file.status === "success" ? "secondary" :
-                                  file.status === "error" ? "destructive" : "default"
-                                }
-                              >
-                                {file.status === "analyzing" ? "Analyzing" :
-                                 file.status === "success" ? "Approved" :
-                                 file.status === "error" ? "Needs Revision" : "Pending"}
-                              </Badge>
+                              ))}
                             </div>
-                            
-                            {file.analysis && (
-                              <div className={`mt-3 p-3 text-sm rounded-md ${
-                                file.status === "success" ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"
-                              }`}>
-                                <p className="font-medium">AI Analysis:</p>
-                                <p>{file.analysis}</p>
-                              </div>
-                            )}
                           </div>
-                        ))}
+                        )}
+                        
+                        {/* Required Documents List */}
+                        {permitApplication.requiredDocuments && permitApplication.requiredDocuments.length > 0 && (
+                          <div className="space-y-2 mb-4">
+                            <h4 className="text-sm font-medium">Required Documents</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                              {permitApplication.requiredDocuments.map((docType) => {
+                                const isUploaded = permitApplication.documents.some(
+                                  doc => doc.documentType === docType && doc.status !== DocumentAnalysisStatus.REJECTED
+                                );
+                                return (
+                                  <div 
+                                    key={docType}
+                                    className={`flex items-center p-2 rounded-md ${
+                                      isUploaded ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'
+                                    }`}
+                                  >
+                                    {isUploaded ? (
+                                      <CheckCircle2 className="h-4 w-4 mr-2" />
+                                    ) : (
+                                      <AlertTriangle className="h-4 w-4 mr-2" />
+                                    )}
+                                    <span className="text-sm">{docType.replace(/_/g, " ")}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Missing Items */}
+                        {permitApplication.missingItems && permitApplication.missingItems.length > 0 && (
+                          <Alert variant="destructive" className="mb-4">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertTitle>Missing Requirements</AlertTitle>
+                            <AlertDescription>
+                              <ul className="list-disc pl-5 space-y-1 mt-2">
+                                {permitApplication.missingItems.map((item, idx) => (
+                                  <li key={idx} className="text-sm">{item}</li>
+                                ))}
+                              </ul>
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                        
+                        {/* Next Steps */}
+                        {permitApplication.nextSteps && permitApplication.nextSteps.length > 0 && (
+                          <Alert className="bg-blue-50 border-blue-200">
+                            <Info className="h-4 w-4 text-blue-600" />
+                            <AlertTitle>Next Steps</AlertTitle>
+                            <AlertDescription>
+                              <ul className="list-disc pl-5 space-y-1 mt-2">
+                                {permitApplication.nextSteps.map((step, idx) => (
+                                  <li key={idx} className="text-sm">{step}</li>
+                                ))}
+                              </ul>
+                            </AlertDescription>
+                          </Alert>
+                        )}
                       </div>
+                    )}
+                    
+                    {/* Document Upload Section */}
+                    {permitApplication && permitApplication.status !== ApplicationStatus.READY_FOR_APPROVAL && (
+                      <div className="border-2 border-dashed rounded-lg p-6 text-center border-neutral-300 bg-neutral-50">
+                        <div className="flex flex-col items-center">
+                          <FileUp className="h-10 w-10 text-neutral-400 mb-4" />
+                          <h3 className="text-lg font-medium mb-2">Upload Documents</h3>
+                          <p className="text-sm text-neutral-500 mb-4 max-w-md">
+                            Select document type and upload your files. Our AI will analyze them for accuracy and compliance with building codes.
+                          </p>
+                          
+                          {/* Document Type Selection */}
+                          <div className="w-full max-w-xs mb-4">
+                            <Select onValueChange={(value) => setSelectedDocumentType(value as DocumentType)}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select document type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {permitApplication.requiredDocuments
+                                  .filter(docType => {
+                                    // Filter out document types that have already been uploaded successfully
+                                    return !permitApplication.documents.some(
+                                      doc => doc.documentType === docType && 
+                                      (doc.status === DocumentAnalysisStatus.APPROVED || 
+                                       doc.status === DocumentAnalysisStatus.PROCESSING)
+                                    );
+                                  })
+                                  .map(docType => (
+                                    <SelectItem key={docType} value={docType}>
+                                      {docType.replace(/_/g, " ")}
+                                    </SelectItem>
+                                  ))
+                                }
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div className="relative">
+                            <Input
+                              type="file"
+                              className="hidden"
+                              id="file-upload"
+                              onChange={handleFileUpload}
+                              accept=".pdf,.jpg,.jpeg,.png,.dwg,.dxf"
+                              disabled={!selectedDocumentType || isAnalyzing}
+                            />
+                            <label
+                              htmlFor="file-upload"
+                              className={`inline-flex h-10 items-center justify-center rounded-md px-4 py-2 text-sm font-medium ${
+                                selectedDocumentType && !isAnalyzing
+                                  ? "bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
+                                  : "bg-neutral-200 text-neutral-500 cursor-not-allowed"
+                              } transition-colors`}
+                            >
+                              {isAnalyzing ? (
+                                <>
+                                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                                  Analyzing...
+                                </>
+                              ) : (
+                                <>
+                                  <Upload className="mr-2 h-4 w-4" />
+                                  {selectedDocumentType ? "Select File" : "Select Document Type First"}
+                                </>
+                              )}
+                            </label>
+                          </div>
+                          <p className="text-xs text-neutral-400 mt-2">
+                            Accepts PDF, JPG, PNG, DWG, and DXF files up to 25MB
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Uploaded files list */}
+                    {permitApplication && permitApplication.documents.length > 0 && (
+                      <div className="mt-6 space-y-4">
+                        <h3 className="text-lg font-medium">Your Documents</h3>
+                        
+                        {isAnalyzing && (
+                          <div className="bg-blue-50 border border-blue-200 rounded-md p-4 text-blue-700">
+                            <p className="flex items-center">
+                              <RefreshCw className="animate-spin h-4 w-4 mr-2 text-blue-600" />
+                              AI is analyzing your documents. This usually takes 10-30 seconds per file.
+                            </p>
+                          </div>
+                        )}
+                        
+                        <Accordion type="single" collapsible className="w-full">
+                          {permitApplication.documents.map((doc, index) => (
+                            <AccordionItem 
+                              key={index} 
+                              value={`doc-${index}`}
+                              className={`border rounded-md overflow-hidden mb-3 ${
+                                doc.status === DocumentAnalysisStatus.APPROVED ? "border-green-200" :
+                                doc.status === DocumentAnalysisStatus.NEEDS_CORRECTION ? "border-amber-200" :
+                                doc.status === DocumentAnalysisStatus.PROCESSING ? "border-blue-200" :
+                                doc.status === DocumentAnalysisStatus.REJECTED ? "border-red-200" :
+                                "border-neutral-200"
+                              }`}
+                            >
+                              <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                                <div className="flex items-center justify-between w-full">
+                                  <div className="flex items-center">
+                                    {doc.status === DocumentAnalysisStatus.PROCESSING ? (
+                                      <RefreshCw className="h-5 w-5 text-blue-500 mr-3 animate-spin" />
+                                    ) : doc.status === DocumentAnalysisStatus.APPROVED ? (
+                                      <CheckCircle2 className="h-5 w-5 text-green-500 mr-3" />
+                                    ) : doc.status === DocumentAnalysisStatus.NEEDS_CORRECTION ? (
+                                      <AlertTriangle className="h-5 w-5 text-amber-500 mr-3" />
+                                    ) : doc.status === DocumentAnalysisStatus.REJECTED ? (
+                                      <XCircle className="h-5 w-5 text-red-500 mr-3" />
+                                    ) : (
+                                      <FileUp className="h-5 w-5 text-neutral-400 mr-3" />
+                                    )}
+                                    <div className="text-left">
+                                      <p className="font-medium text-sm">{doc.fileName}</p>
+                                      <p className="text-xs text-neutral-500">
+                                        {doc.documentType?.replace(/_/g, " ")} • {formatFileSize(doc.fileSize)}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <Badge
+                                    variant={
+                                      doc.status === DocumentAnalysisStatus.PROCESSING ? "outline" :
+                                      doc.status === DocumentAnalysisStatus.APPROVED ? "secondary" :
+                                      doc.status === DocumentAnalysisStatus.NEEDS_CORRECTION ? "default" :
+                                      doc.status === DocumentAnalysisStatus.REJECTED ? "destructive" : "default"
+                                    }
+                                  >
+                                    {doc.status === DocumentAnalysisStatus.PROCESSING ? "Analyzing" :
+                                    doc.status === DocumentAnalysisStatus.APPROVED ? "Approved" :
+                                    doc.status === DocumentAnalysisStatus.NEEDS_CORRECTION ? "Needs Correction" :
+                                    doc.status === DocumentAnalysisStatus.REJECTED ? "Rejected" : "Pending"}
+                                  </Badge>
+                                </div>
+                              </AccordionTrigger>
+                              <AccordionContent className="px-4 pb-4">
+                                {doc.issues && doc.issues.length > 0 ? (
+                                  <div className="space-y-3">
+                                    <h4 className="text-sm font-medium">AI Analysis Results</h4>
+                                    <div className="space-y-2">
+                                      {doc.issues.map((issue, idx) => (
+                                        <div 
+                                          key={idx} 
+                                          className={`p-3 rounded-md text-sm ${
+                                            issue.severity === "critical" ? "bg-red-50 text-red-700" :
+                                            issue.severity === "major" ? "bg-amber-50 text-amber-700" :
+                                            issue.severity === "minor" ? "bg-yellow-50 text-yellow-700" :
+                                            "bg-blue-50 text-blue-700"
+                                          }`}
+                                        >
+                                          <div className="flex items-start">
+                                            <AlertTriangle className="h-4 w-4 mt-0.5 mr-2 flex-shrink-0" />
+                                            <div>
+                                              <p className="font-medium">{issue.severity.toUpperCase()}: {issue.description}</p>
+                                              {issue.location && <p className="text-xs mt-1">Location: {issue.location}</p>}
+                                              {issue.recommendation && (
+                                                <p className="mt-1 italic">{issue.recommendation}</p>
+                                              )}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                    
+                                    {(doc.status === DocumentAnalysisStatus.NEEDS_CORRECTION || 
+                                      doc.status === DocumentAnalysisStatus.REJECTED) && (
+                                      <div className="mt-4">
+                                        <Button 
+                                          variant="outline" 
+                                          size="sm" 
+                                          className="border-amber-200 text-amber-700"
+                                          onClick={() => document.getElementById("file-upload")?.click()}
+                                        >
+                                          <Upload className="mr-2 h-3 w-3" />
+                                          Upload Corrected Document
+                                        </Button>
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div className="py-2">
+                                    {doc.status === DocumentAnalysisStatus.APPROVED ? (
+                                      <p className="text-sm text-green-700">
+                                        This document has been analyzed and approved by our AI system. No issues were detected.
+                                      </p>
+                                    ) : doc.status === DocumentAnalysisStatus.PROCESSING ? (
+                                      <p className="text-sm text-blue-700">
+                                        This document is currently being analyzed by our AI system. Results will be available shortly.
+                                      </p>
+                                    ) : (
+                                      <p className="text-sm text-neutral-600">
+                                        No analysis information is available for this document yet.
+                                      </p>
+                                    )}
+                                  </div>
+                                )}
+                                
+                                {doc.confidence !== undefined && (
+                                  <div className="mt-3 pt-3 border-t">
+                                    <p className="text-xs text-neutral-500">
+                                      AI confidence score: {Math.round(doc.confidence * 100)}%
+                                    </p>
+                                    <p className="text-xs text-neutral-500 mt-1">
+                                      Uploaded: {new Date(doc.uploadTimestamp).toLocaleString()}
+                                    </p>
+                                  </div>
+                                )}
+                              </AccordionContent>
+                            </AccordionItem>
+                          ))}
+                        </Accordion>
+                      </div>
+                    )}
+                    
+                    {/* Ready for approval section */}
+                    {permitApplication && permitApplication.readyForHumanReview && (
+                      <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                        <div className="flex flex-col items-center text-center">
+                          <CheckCircle2 className="h-10 w-10 text-green-500 mb-2" />
+                          <h3 className="text-lg font-medium mb-1">Application Ready for Review!</h3>
+                          <p className="text-sm text-green-700 mb-4">
+                            All required documents have been uploaded and verified by our AI system. Your application has been sent to our team for final review.
+                          </p>
+                          <div className="flex items-center space-x-4">
+                            <Button variant="outline" className="bg-white">
+                              <ExternalLink className="mr-2 h-4 w-4" />
+                              View Application Summary
+                            </Button>
+                            <Button variant="outline" className="bg-white">
+                              <DownloadCloud className="mr-2 h-4 w-4" />
+                              Download All Documents
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="flex justify-between items-center">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setActiveTab("application")}
+                      >
+                        Back to Application
+                      </Button>
+                      
+                      {!permitApplication?.readyForHumanReview && (
+                        <Button 
+                          type="button"
+                          onClick={() => form.handleSubmit(onSubmit)()}
+                          disabled={submitApplicationMutation.isPending}
+                        >
+                          {submitApplicationMutation.isPending ? (
+                            <>
+                              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                              Submitting...
+                            </>
+                          ) : "Complete Application"}
+                        </Button>
+                      )}
                     </div>
-                  )}
-                  
-                  <div className="flex justify-between items-center">
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setActiveTab("application")}
-                    >
-                      Back to Application
-                    </Button>
-                    <Button 
-                      type="button"
-                      onClick={() => form.handleSubmit(onSubmit)()}
-                      disabled={submitApplicationMutation.isPending}
-                    >
-                      {submitApplicationMutation.isPending ? "Submitting..." : "Complete Application"}
-                    </Button>
                   </div>
-                </div>
+                )}
               </TabsContent>
             </Tabs>
           </CardContent>
