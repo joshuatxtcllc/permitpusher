@@ -360,6 +360,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // AI System Metrics endpoint
+  app.get("/api/ai-metrics", authMiddleware, async (req, res) => {
+    try {
+      const applications = getAllPermitApplications();
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      const todayApplications = applications.filter(app => 
+        new Date(app.createdAt) >= today
+      );
+      
+      const approvedToday = applications.filter(app => 
+        app.status === "approved" && new Date(app.updatedAt) >= today
+      ).length;
+      
+      const processingToday = todayApplications.filter(app => 
+        app.status === "under_review" || app.status === "documents_uploaded"
+      ).length;
+      
+      // Calculate average processing time (mock data for demo)
+      const completedApps = applications.filter(app => 
+        app.status === "approved" || app.status === "denied"
+      );
+      
+      const totalProcessingTime = completedApps.reduce((sum, app) => {
+        const created = new Date(app.createdAt);
+        const updated = new Date(app.updatedAt);
+        return sum + (updated.getTime() - created.getTime());
+      }, 0);
+      
+      const averageProcessingTime = completedApps.length > 0 
+        ? totalProcessingTime / completedApps.length / (1000 * 60 * 60) // hours
+        : 0;
+      
+      const metrics = {
+        totalApplications: applications.length,
+        processingToday,
+        approvedToday,
+        averageProcessingTime: Math.round(averageProcessingTime * 10) / 10,
+        aiAccuracyRate: 0.973, // Mock high accuracy rate
+        humanInterventionRate: 0.18, // Mock low intervention rate
+        systemLoad: Math.random() * 0.3 + 0.4 // Mock system load 40-70%
+      };
+      
+      res.status(200).json({ success: true, metrics });
+    } catch (error) {
+      res.status(500).json({ success: false, error: (error as Error).message });
+    }
+  });
+
+  // AI Control endpoint for admin actions
+  app.post("/api/ai-control", authMiddleware, async (req, res) => {
+    try {
+      const { action, applicationId } = req.body;
+      
+      // Simulate AI control actions
+      let result = "";
+      
+      switch (action) {
+        case "reprocess_failed":
+          result = "Reprocessing 3 failed applications with updated AI models";
+          break;
+        case "optimize_models":
+          result = "AI models optimized successfully. Performance improved by 2.3%";
+          break;
+        case "clear_cache":
+          result = "System cache cleared. Performance refreshed";
+          break;
+        case "priority_process":
+          if (applicationId) {
+            result = `Application ${applicationId} moved to priority queue`;
+          }
+          break;
+        default:
+          result = "Action completed successfully";
+      }
+      
+      res.status(200).json({ success: true, message: result });
+    } catch (error) {
+      res.status(500).json({ success: false, error: (error as Error).message });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -104,6 +104,11 @@ export default function Admin() {
               CRM Dashboard
             </Button>
           </Link>
+          <Link href="/permit-admin">
+            <Button className="bg-blue-600 hover:bg-blue-700">
+              AI Permit Admin
+            </Button>
+          </Link>
           <Button 
             variant="outline" 
             onClick={() => {

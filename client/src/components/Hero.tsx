@@ -33,16 +33,29 @@ export default function Hero() {
             </div>
             <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
               <button
-                onClick={() => handleNavClick("contact")}
-                className="bg-secondary hover:bg-secondary/80 text-neutral-900 font-bold py-3 px-6 rounded-md transition duration-300 text-center"
+                onClick={onStartTutorial}
+                className="bg-secondary hover:bg-secondary/80 text-neutral-900 font-bold py-3 px-6 rounded-md transition duration-300 text-center flex items-center justify-center"
               >
-                Get Your Permit Fast
+                <svg className="mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M8 12h8"/>
+                  <path d="M12 8v8"/>
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M12 1v6"/>
+                  <path d="M12 17v6"/>
+                </svg>
+                Take Interactive Tour
               </button>
               <button
-                onClick={() => handleNavClick("services")}
-                className="bg-white hover:bg-neutral-200 text-primary font-bold py-3 px-6 rounded-md transition duration-300 text-center"
+                onClick={() => handleNavClick("permit-application")}
+                className="border border-white text-white hover:bg-white hover:text-primary font-bold py-3 px-6 rounded-md transition duration-300 text-center"
               >
-                View Our Services
+                Apply for Permit
+              </button>
+              <button
+                onClick={() => handleNavClick("contact")}
+                className="border border-white text-white hover:bg-white hover:text-primary font-bold py-3 px-6 rounded-md transition duration-300 text-center"
+              >
+                Contact Us
               </button>
             </div>
           </div>

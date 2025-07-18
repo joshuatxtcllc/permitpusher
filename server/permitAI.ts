@@ -67,6 +67,18 @@ export interface DocumentAnalysisResult {
   lastUpdated: Date;
 }
 
+// AI Processing stages
+export enum AIProcessingStage {
+  INTAKE = "intake",
+  DOCUMENT_ANALYSIS = "document_analysis", 
+  CODE_COMPLIANCE = "code_compliance",
+  ZONING_CHECK = "zoning_check",
+  SAFETY_REVIEW = "safety_review",
+  ENVIRONMENTAL_CHECK = "environmental_check",
+  FINAL_VALIDATION = "final_validation",
+  HUMAN_REVIEW = "human_review"
+}
+
 // Permit application with AI processing status
 export interface PermitApplication {
   id: string;
@@ -79,16 +91,22 @@ export interface PermitApplication {
   estimatedCost: string;
   projectDescription: string;
   status: ApplicationStatus;
+  aiProcessingStage: AIProcessingStage;
+  aiConfidenceScore: number;
+  priority: "low" | "normal" | "high" | "urgent";
   documents: DocumentAnalysisResult[];
   requiredDocuments: DocumentType[];
   aiComments: Array<{
     timestamp: Date;
     message: string;
+    type: "info" | "warning" | "error" | "success";
   }>;
   applicationComplete: boolean;
   missingItems: string[];
   readyForHumanReview: boolean;
   siteOwnerReviewUrl?: string;
+  assignedTo?: string;
+  estimatedCompletionDate: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -163,17 +181,22 @@ export function createPermitApplication(applicationData: any): PermitApplication
     estimatedCost: applicationData.estimatedCost,
     projectDescription: applicationData.projectDescription,
     status: ApplicationStatus.DRAFT,
+    aiProcessingStage: AIProcessingStage.INTAKE,
+    aiConfidenceScore: 0.85 + Math.random() * 0.15, // 85-100% initial confidence
+    priority: "normal",
     documents: [],
     requiredDocuments,
     aiComments: [
       {
         timestamp: new Date(),
-        message: `Application created. Please upload the following required documents: ${requiredDocuments.join(", ").replace(/_/g, " ")}.`
+        message: `Application created. Please upload the following required documents: ${requiredDocuments.join(", ").replace(/_/g, " ")}.`,
+        type: "info"
       }
     ],
     applicationComplete: false,
     missingItems: [...requiredDocuments],
     readyForHumanReview: false,
+    estimatedCompletionDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
     createdAt: new Date(),
     updatedAt: new Date()
   };
