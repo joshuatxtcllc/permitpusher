@@ -38,12 +38,12 @@ const faqs: FAQItem[] = [
       "We provide permit services throughout all of Houston and surrounding Harris County areas. We have expertise in every jurisdiction in the region and specialized knowledge of requirements in different Houston neighborhoods, including historic districts, flood zones, and other special planning areas.",
   },
   {
-    question: "How does your \"no win, no fee\" personal injury service work?",
+    question: "How fast can my permit be processed?",
     answer:
-      "Our personal injury services operate on a contingency fee basis, meaning you pay nothing upfront. We cover all costs related to your case. We only collect payment if we win your case, as a percentage of your settlement or award. If we don't win, you owe us nothing.",
+      "Our AI system can process most residential permits in 2-4 hours and commercial permits in 4-8 hours. This is dramatically faster than traditional processing which can take 2-3 weeks. The exact time depends on permit complexity and document completeness.",
   },
   {
-    question: "What makes dispensary permits different from other business permits?",
+    question: "What makes our AI permit processing different from traditional methods?",
     answer:
       "Dispensary permits involve navigating both standard business permitting and specialized regulatory requirements. These permits require compliance with specific zoning restrictions, security protocols, inventory tracking systems, and various other regulations that don't apply to typical businesses. We have expertise in these complex permits to help avoid costly delays.",
   },

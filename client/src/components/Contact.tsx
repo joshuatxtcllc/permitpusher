@@ -94,10 +94,9 @@ export default function Contact() {
               </div>
               <span className="text-sm text-primary font-medium">Your information will be analyzed by our AI system for optimal permit strategy</span>
             </div>
+            
             <p className="text-lg text-neutral-600 mb-8">
-              Complete this form to have our AI Permit Processor analyze your project requirements
-              and determine the optimal permitting strategy. Our neural network will assess historical 
-              approval patterns to maximize your success rate.
+              Ready to fast-track your permit processing? Our AI-powered system and expert team will get your permits approved quickly and efficiently.
             </p>
 
             <Form {...form}>
@@ -452,7 +451,7 @@ export default function Contact() {
             <div className="bg-primary rounded-lg shadow-md p-8 text-white relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 -mt-8 -mr-8 opacity-10">
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-                  <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 2 12C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2"/>
                   <path d="M7.5 12H16.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                   <path d="M12.5 7.5L12.5 16.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                   <path d="M4 12C4 12 7 8 12 8C17 8 20 12 20 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
