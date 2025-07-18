@@ -33,7 +33,13 @@ export default function Hero() {
             </div>
             <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
               <button
-                onClick={onStartTutorial}
+                onClick={() => {
+                  // Navigate to permit application
+                  const permitSection = document.getElementById('permit-application');
+                  if (permitSection) {
+                    permitSection.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
                 className="bg-secondary hover:bg-secondary/80 text-neutral-900 font-bold py-3 px-6 rounded-md transition duration-300 text-center flex items-center justify-center"
               >
                 <svg className="mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

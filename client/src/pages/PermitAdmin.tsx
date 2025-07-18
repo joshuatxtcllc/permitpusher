@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,7 +42,8 @@ import {
   Calendar,
   Building,
   MapPin,
-  DollarSign
+  DollarSign,
+  CreditCard
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { apiRequest } from "@/lib/queryClient";
@@ -249,7 +249,7 @@ export default function PermitAdmin() {
               </p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">AI Accuracy Rate</CardTitle>
@@ -260,7 +260,7 @@ export default function PermitAdmin() {
               <Progress value={metrics.aiAccuracyRate * 100} className="mt-2" />
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Avg Processing Time</CardTitle>
@@ -273,7 +273,7 @@ export default function PermitAdmin() {
               </p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">System Load</CardTitle>
@@ -536,7 +536,7 @@ export default function PermitAdmin() {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div>
                     <h4 className="font-semibold mb-3">System Controls</h4>
                     <div className="flex space-x-3">
@@ -606,7 +606,7 @@ export default function PermitAdmin() {
                     </div>
                   </div>
                 </div>
-                
+
                 {selectedApplication.aiComments && selectedApplication.aiComments.length > 0 && (
                   <div className="mt-6">
                     <h4 className="font-semibold mb-3">AI Processing Log</h4>
@@ -622,7 +622,7 @@ export default function PermitAdmin() {
                     </div>
                   </div>
                 )}
-                
+
                 <div className="mt-6 flex space-x-3">
                   {selectedApplication.status === ApplicationStatus.READY_FOR_APPROVAL && (
                     <>

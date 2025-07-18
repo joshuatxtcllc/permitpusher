@@ -22,6 +22,18 @@ import {
   DocumentType,
   generateNextSteps
 } from "./permitAI";
+import {
+  createPaymentRecord,
+  createStripePaymentSession,
+  completePayment,
+  failPayment,
+  getPaymentRecord,
+  getPaymentByApplicationId,
+  getAllPayments,
+  processRefund,
+  getPaymentAnalytics,
+  calculatePermitFees
+} from "./payments";
 import { z } from "zod";
 
 // Simple auth middleware for admin routes - would be more robust in production
@@ -438,6 +450,262 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.status(200).json({ success: true, message: result });
+    } catch (error) {
+      res.status(500).json({ success: false, error: (error as Error).message });
+    }
+  });
+
+  // === PAYMENT PROCESSING ROUTES ===
+  
+  // Calculate permit fees
+  app.post("/api/permit-fees/calculate", async (req, res) => {
+    try {
+      const { permitType, projectType, estimatedCost, expedited } = req.body;
+      
+      const cost = parseInt(estimatedCost) || 0;
+      const feeBreakdown = calculatePermitFees(permitType, projectType, cost, expedited || false);
+      
+      res.status(200).json({
+        success: true,
+        fees: feeBreakdown,
+        formatted: {
+          baseFee: `$${(feeBreakdown.baseFee / 100).toFixed(2)}`,
+          processingFee: `$${(feeBreakdown.processingFee / 100).toFixed(2)}`,
+          inspectionFee: `$${(feeBreakdown.inspectionFee / 100).toFixed(2)}`,
+          expediteFee: feeBreakdown.expediteFee ? `$${(feeBreakdown.expediteFee / 100).toFixed(2)}` : null,
+          total: `$${(feeBreakdown.total / 100).toFixed(2)}`
+        }
+      });
+    } catch (error) {
+      res.status(400).json({ success: false, error: (error as Error).message });
+    }
+  });
+  
+  // Create payment for permit application
+  app.post("/api/permit-applications/:id/payment", async (req, res) => {
+    try {
+      const applicationId = req.params.id;
+      const { expedited } = req.body;
+      
+      const application = getPermitApplication(applicationId);
+      if (!application) {
+        return res.status(404).json({ success: false, error: "Application not found" });
+      }
+      
+      // Check if payment already exists
+      const existingPayment = getPaymentByApplicationId(applicationId);
+      if (existingPayment) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Payment already exists for this application",
+          payment: existingPayment
+        });
+      }
+      
+      const estimatedCost = parseInt(application.estimatedCost) || 0;
+      const payment = createPaymentRecord(
+        applicationId,
+        application.permitType,
+        application.projectType,
+        estimatedCost,
+        expedited || false
+      );
+      
+      res.status(201).json({
+        success: true,
+        message: "Payment record created successfully",
+        payment,
+        formatted: {
+          total: `$${(payment.amount / 100).toFixed(2)}`
+        }
+      });
+    } catch (error) {
+      res.status(400).json({ success: false, error: (error as Error).message });
+    }
+  });
+  
+  // Create Stripe checkout session
+  app.post("/api/payments/:id/checkout", async (req, res) => {
+    try {
+      const paymentId = req.params.id;
+      const payment = getPaymentRecord(paymentId);
+      
+      if (!payment) {
+        return res.status(404).json({ success: false, error: "Payment not found" });
+      }
+      
+      if (payment.status !== 'pending') {
+        return res.status(400).json({ 
+          success: false, 
+          error: `Payment is already ${payment.status}` 
+        });
+      }
+      
+      const successUrl = `${req.headers.origin}/payment/success?payment_id=${paymentId}`;
+      const cancelUrl = `${req.headers.origin}/payment/cancel?payment_id=${paymentId}`;
+      
+      const session = await createStripePaymentSession(payment, successUrl, cancelUrl);
+      
+      res.status(200).json({
+        success: true,
+        sessionId: session.sessionId,
+        checkoutUrl: session.url
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, error: (error as Error).message });
+    }
+  });
+  
+  // Handle payment success webhook (would be called by Stripe)
+  app.post("/api/payments/:id/success", async (req, res) => {
+    try {
+      const paymentId = req.params.id;
+      const { paymentIntentId } = req.body;
+      
+      const payment = completePayment(paymentId, paymentIntentId);
+      if (!payment) {
+        return res.status(404).json({ success: false, error: "Payment not found" });
+      }
+      
+      res.status(200).json({
+        success: true,
+        message: "Payment completed successfully",
+        payment
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, error: (error as Error).message });
+    }
+  });
+  
+  // Handle payment failure
+  app.post("/api/payments/:id/failed", async (req, res) => {
+    try {
+      const paymentId = req.params.id;
+      
+      const payment = failPayment(paymentId);
+      if (!payment) {
+        return res.status(404).json({ success: false, error: "Payment not found" });
+      }
+      
+      res.status(200).json({
+        success: true,
+        message: "Payment marked as failed",
+        payment
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, error: (error as Error).message });
+    }
+  });
+  
+  // Get payment details
+  app.get("/api/payments/:id", async (req, res) => {
+    try {
+      const paymentId = req.params.id;
+      const payment = getPaymentRecord(paymentId);
+      
+      if (!payment) {
+        return res.status(404).json({ success: false, error: "Payment not found" });
+      }
+      
+      res.status(200).json({
+        success: true,
+        payment,
+        formatted: {
+          total: `$${(payment.amount / 100).toFixed(2)}`,
+          baseFee: `$${(payment.feeBreakdown.baseFee / 100).toFixed(2)}`,
+          processingFee: `$${(payment.feeBreakdown.processingFee / 100).toFixed(2)}`,
+          inspectionFee: `$${(payment.feeBreakdown.inspectionFee / 100).toFixed(2)}`,
+          expediteFee: payment.feeBreakdown.expediteFee 
+            ? `$${(payment.feeBreakdown.expediteFee / 100).toFixed(2)}` 
+            : null
+        }
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, error: (error as Error).message });
+    }
+  });
+  
+  // Get payment by application ID
+  app.get("/api/permit-applications/:id/payment", async (req, res) => {
+    try {
+      const applicationId = req.params.id;
+      const payment = getPaymentByApplicationId(applicationId);
+      
+      if (!payment) {
+        return res.status(404).json({ success: false, error: "No payment found for this application" });
+      }
+      
+      res.status(200).json({
+        success: true,
+        payment,
+        formatted: {
+          total: `$${(payment.amount / 100).toFixed(2)}`
+        }
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, error: (error as Error).message });
+    }
+  });
+  
+  // Admin: Get all payments
+  app.get("/api/payments", authMiddleware, async (req, res) => {
+    try {
+      const payments = getAllPayments();
+      
+      res.status(200).json({
+        success: true,
+        payments: payments.map(payment => ({
+          ...payment,
+          formatted: {
+            total: `$${(payment.amount / 100).toFixed(2)}`
+          }
+        }))
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, error: (error as Error).message });
+    }
+  });
+  
+  // Admin: Process refund
+  app.post("/api/payments/:id/refund", authMiddleware, async (req, res) => {
+    try {
+      const paymentId = req.params.id;
+      const { amount } = req.body;
+      
+      const payment = await processRefund(paymentId, amount);
+      if (!payment) {
+        return res.status(404).json({ 
+          success: false, 
+          error: "Payment not found or cannot be refunded" 
+        });
+      }
+      
+      res.status(200).json({
+        success: true,
+        message: "Refund processed successfully",
+        payment
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, error: (error as Error).message });
+    }
+  });
+  
+  // Admin: Get payment analytics
+  app.get("/api/payments/analytics", authMiddleware, async (req, res) => {
+    try {
+      const analytics = getPaymentAnalytics();
+      
+      res.status(200).json({
+        success: true,
+        analytics: {
+          ...analytics,
+          formatted: {
+            totalRevenue: `$${(analytics.totalRevenue / 100).toLocaleString()}`,
+            monthlyRevenue: `$${(analytics.monthlyRevenue / 100).toLocaleString()}`,
+            averageTransactionValue: `$${(analytics.averageTransactionValue / 100).toFixed(2)}`
+          }
+        }
+      });
     } catch (error) {
       res.status(500).json({ success: false, error: (error as Error).message });
     }

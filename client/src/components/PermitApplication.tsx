@@ -9,7 +9,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -59,6 +58,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import PaymentForm from "./PaymentForm";
 
 // Form schema for permit application
 const permitApplicationSchema = z.object({
@@ -150,6 +150,9 @@ type PermitApplicationState = {
   applicationComplete: boolean;
   readyForHumanReview: boolean;
   nextSteps: string[];
+  permitType: string;
+  projectType: string;
+  estimatedCost: string;
 };
 
 export default function PermitApplication() {
@@ -161,7 +164,7 @@ export default function PermitApplication() {
   const [permitApplication, setPermitApplication] = useState<PermitApplicationState | null>(null);
   const [selectedDocumentType, setSelectedDocumentType] = useState<DocumentType | null>(null);
   const [processingStep, setProcessingStep] = useState(1);
-  
+
   // Fetch application status if we have an ID
   const { data: applicationData, refetch: refetchApplication } = useQuery({
     queryKey: ['permit-application', applicationId],
@@ -194,17 +197,17 @@ export default function PermitApplication() {
   useEffect(() => {
     if (applicationData) {
       setPermitApplication(applicationData.application);
-      
+
       // If the application has documents, update our local state
       if (applicationData.application.documents.length > 0) {
         setUploadedFiles(applicationData.application.documents);
       }
-      
+
       // When documents are being processed, check more frequently
       const documentsProcessing = applicationData.application.documents.some(
         doc => doc.status === "analyzing" || doc.status === "pending"
       );
-      
+
       if (documentsProcessing) {
         setIsAnalyzing(true);
         // Refetch to check progress
@@ -212,7 +215,7 @@ export default function PermitApplication() {
       } else {
         setIsAnalyzing(false);
       }
-      
+
       // If the application status changes, show a toast notification
       if (permitApplication && permitApplication.status !== applicationData.application.status) {
         toast({
@@ -233,14 +236,14 @@ export default function PermitApplication() {
         title: "Application Created",
         description: "Your permit application has been created. Now you can upload the required documents.",
       });
-      
+
       // Store the application ID and update the state
       setApplicationId(response.applicationId);
       setPermitApplication(response.application);
-      
+
       // Move to the documents tab
       setActiveTab("documents");
-      
+
       // Setup processing step
       setProcessingStep(2);
     },
@@ -262,7 +265,7 @@ export default function PermitApplication() {
   const uploadDocumentMutation = useMutation({
     mutationFn: async (file: File) => {
       if (!applicationId || !selectedDocumentType) return null;
-      
+
       // In a real app, we would upload the file to a server
       // Here we're just simulating the upload with the file metadata
       const fileData = {
@@ -271,17 +274,17 @@ export default function PermitApplication() {
         mimeType: file.type,
         fileSize: file.size
       };
-      
+
       return apiRequest("POST", `/api/permit-applications/${applicationId}/documents`, fileData);
     },
     onSuccess: (response, file) => {
       if (!response) return;
-      
+
       toast({
         title: "Document Uploaded",
         description: "Your document was uploaded successfully and is being analyzed by our AI system.",
       });
-      
+
       // Add the file to our local state temporarily
       const newFile: UploadedFile = {
         documentId: response.documentId,
@@ -291,12 +294,12 @@ export default function PermitApplication() {
         documentType: selectedDocumentType || undefined,
         status: "analyzing",
       };
-      
+
       setUploadedFiles(prev => [...prev, newFile]);
-      
+
       // Refetch the application to get the updated document list with analysis
       setTimeout(() => refetchApplication(), 2000);
-      
+
       // Reset the selected document type
       setSelectedDocumentType(null);
     },
@@ -313,7 +316,7 @@ export default function PermitApplication() {
   const resubmitDocumentMutation = useMutation({
     mutationFn: async ({ documentId, file }: { documentId: string, file: File }) => {
       if (!applicationId) return null;
-      
+
       // In a real app, we would upload the file to a server
       // Here we're just simulating the upload with the file metadata
       const fileData = {
@@ -321,17 +324,17 @@ export default function PermitApplication() {
         mimeType: file.type,
         fileSize: file.size
       };
-      
+
       return apiRequest("PUT", `/api/permit-applications/${applicationId}/documents/${documentId}`, fileData);
     },
     onSuccess: (response) => {
       if (!response) return;
-      
+
       toast({
         title: "Document Resubmitted",
         description: "Your updated document was submitted successfully and is being analyzed by our AI system.",
       });
-      
+
       // Refetch the application to get the updated document list with analysis
       setTimeout(() => refetchApplication(), 2000);
     },
@@ -347,15 +350,15 @@ export default function PermitApplication() {
   // File upload handler
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!event.target.files || event.target.files.length === 0 || !selectedDocumentType) return;
-    
+
     const file = event.target.files[0];
     uploadDocumentMutation.mutate(file);
   };
-  
+
   // Document resubmission handler
   const handleDocumentResubmit = (documentId: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!event.target.files || event.target.files.length === 0) return;
-    
+
     const file = event.target.files[0];
     resubmitDocumentMutation.mutate({ documentId, file });
   };
@@ -365,6 +368,12 @@ export default function PermitApplication() {
     if (bytes < 1024) return bytes + " bytes";
     else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB";
     else return (bytes / 1048576).toFixed(1) + " MB";
+  };
+
+  const fetchApplicationStatus = () => {
+    if (applicationId) {
+      refetchApplication();
+    }
   };
 
   return (
@@ -392,7 +401,7 @@ export default function PermitApplication() {
                 <TabsTrigger value="application">Application Form</TabsTrigger>
                 <TabsTrigger value="documents">Document Upload</TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="application" className="pt-6">
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -410,7 +419,7 @@ export default function PermitApplication() {
                           </FormItem>
                         )}
                       />
-                      
+
                       <FormField
                         control={form.control}
                         name="email"
@@ -424,7 +433,7 @@ export default function PermitApplication() {
                           </FormItem>
                         )}
                       />
-                      
+
                       <FormField
                         control={form.control}
                         name="phone"
@@ -438,7 +447,7 @@ export default function PermitApplication() {
                           </FormItem>
                         )}
                       />
-                      
+
                       <FormField
                         control={form.control}
                         name="propertyAddress"
@@ -452,7 +461,7 @@ export default function PermitApplication() {
                           </FormItem>
                         )}
                       />
-                      
+
                       <FormField
                         control={form.control}
                         name="projectType"
@@ -476,7 +485,7 @@ export default function PermitApplication() {
                           </FormItem>
                         )}
                       />
-                      
+
                       <FormField
                         control={form.control}
                         name="permitType"
@@ -504,7 +513,7 @@ export default function PermitApplication() {
                           </FormItem>
                         )}
                       />
-                      
+
                       <FormField
                         control={form.control}
                         name="estimatedCost"
@@ -519,7 +528,7 @@ export default function PermitApplication() {
                         )}
                       />
                     </div>
-                    
+
                     <FormField
                       control={form.control}
                       name="projectDescription"
@@ -537,7 +546,7 @@ export default function PermitApplication() {
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={form.control}
                       name="agreeToTerms"
@@ -563,7 +572,7 @@ export default function PermitApplication() {
                         </FormItem>
                       )}
                     />
-                    
+
                     <div className="flex justify-between items-center">
                       <Button 
                         type="button" 
@@ -582,7 +591,7 @@ export default function PermitApplication() {
                   </form>
                 </Form>
               </TabsContent>
-              
+
               <TabsContent value="documents" className="pt-6">
                 {!applicationId ? (
                   // Step 1: Need to create application first
@@ -594,7 +603,7 @@ export default function PermitApplication() {
                         Please complete and submit the application form before uploading documents. Our AI system will analyze which documents you need to provide.
                       </AlertDescription>
                     </Alert>
-                    
+
                     <div className="flex justify-center">
                       <Button 
                         type="button" 
@@ -623,7 +632,7 @@ export default function PermitApplication() {
                             {permitApplication.status.replace(/_/g, " ")}
                           </Badge>
                         </div>
-                        
+
                         {/* Progress steps */}
                         <Progress 
                           value={
@@ -635,7 +644,7 @@ export default function PermitApplication() {
                           } 
                           className="h-2 mb-4" 
                         />
-                        
+
                         {/* AI comments/messages */}
                         {permitApplication.aiComments && permitApplication.aiComments.length > 0 && (
                           <div className="mb-4 border rounded-md p-4 bg-neutral-50">
@@ -655,7 +664,7 @@ export default function PermitApplication() {
                             </div>
                           </div>
                         )}
-                        
+
                         {/* Required Documents List */}
                         {permitApplication.requiredDocuments && permitApplication.requiredDocuments.length > 0 && (
                           <div className="space-y-2 mb-4">
@@ -684,7 +693,7 @@ export default function PermitApplication() {
                             </div>
                           </div>
                         )}
-                        
+
                         {/* Missing Items */}
                         {permitApplication.missingItems && permitApplication.missingItems.length > 0 && (
                           <Alert variant="destructive" className="mb-4">
@@ -699,7 +708,7 @@ export default function PermitApplication() {
                             </AlertDescription>
                           </Alert>
                         )}
-                        
+
                         {/* Next Steps */}
                         {permitApplication.nextSteps && permitApplication.nextSteps.length > 0 && (
                           <Alert className="bg-blue-50 border-blue-200">
@@ -716,7 +725,7 @@ export default function PermitApplication() {
                         )}
                       </div>
                     )}
-                    
+
                     {/* Document Upload Section */}
                     {permitApplication && permitApplication.status !== ApplicationStatus.READY_FOR_APPROVAL && (
                       <div className="border-2 border-dashed rounded-lg p-6 text-center border-neutral-300 bg-neutral-50">
@@ -726,7 +735,7 @@ export default function PermitApplication() {
                           <p className="text-sm text-neutral-500 mb-4 max-w-md">
                             Select document type and upload your files. Our AI will analyze them for accuracy and compliance with building codes.
                           </p>
-                          
+
                           {/* Document Type Selection */}
                           <div className="w-full max-w-xs mb-4">
                             <Select onValueChange={(value) => setSelectedDocumentType(value as DocumentType)}>
@@ -752,7 +761,7 @@ export default function PermitApplication() {
                               </SelectContent>
                             </Select>
                           </div>
-                          
+
                           <div className="relative">
                             <Input
                               type="file"
@@ -794,7 +803,7 @@ export default function PermitApplication() {
                     {permitApplication && permitApplication.documents.length > 0 && (
                       <div className="mt-6 space-y-4">
                         <h3 className="text-lg font-medium">Your Documents</h3>
-                        
+
                         {isAnalyzing && (
                           <div className="bg-blue-50 border border-blue-200 rounded-md p-4 text-blue-700">
                             <p className="flex items-center">
@@ -803,7 +812,7 @@ export default function PermitApplication() {
                             </p>
                           </div>
                         )}
-                        
+
                         <Accordion type="single" collapsible className="w-full">
                           {permitApplication.documents.map((doc, index) => (
                             <AccordionItem 
@@ -863,7 +872,7 @@ export default function PermitApplication() {
                                           key={idx} 
                                           className={`p-3 rounded-md text-sm ${
                                             issue.severity === "critical" ? "bg-red-50 text-red-700" :
-                                            issue.severity === "major" ? "bg-amber-50 text-amber-700" :
+                                            issue.severity === "major" ? "bg-amber-50 text-amber-700":
                                             issue.severity === "minor" ? "bg-yellow-50 text-yellow-700" :
                                             "bg-blue-50 text-blue-700"
                                           }`}
@@ -881,7 +890,7 @@ export default function PermitApplication() {
                                         </div>
                                       ))}
                                     </div>
-                                    
+
                                     {(doc.status === DocumentAnalysisStatus.NEEDS_CORRECTION || 
                                       doc.status === DocumentAnalysisStatus.REJECTED) && (
                                       <div className="mt-4">
@@ -914,7 +923,7 @@ export default function PermitApplication() {
                                     )}
                                   </div>
                                 )}
-                                
+
                                 {doc.confidence !== undefined && (
                                   <div className="mt-3 pt-3 border-t">
                                     <p className="text-xs text-neutral-500">
@@ -931,7 +940,7 @@ export default function PermitApplication() {
                         </Accordion>
                       </div>
                     )}
-                    
+
                     {/* Ready for approval section */}
                     {permitApplication && permitApplication.readyForHumanReview && (
                       <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
@@ -954,7 +963,7 @@ export default function PermitApplication() {
                         </div>
                       </div>
                     )}
-                    
+
                     <div className="flex justify-between items-center">
                       <Button 
                         variant="outline" 
@@ -962,7 +971,7 @@ export default function PermitApplication() {
                       >
                         Back to Application
                       </Button>
-                      
+
                       {!permitApplication?.readyForHumanReview && (
                         <Button 
                           type="button"
@@ -978,6 +987,22 @@ export default function PermitApplication() {
                         </Button>
                       )}
                     </div>
+
+                    {/* Payment Section */}
+                    {permitApplication && (
+                      <div className="mt-8">
+                        <PaymentForm
+                          applicationId={permitApplication.id}
+                          permitType={permitApplication.permitType}
+                          projectType={permitApplication.projectType}
+                          estimatedCost={permitApplication.estimatedCost}
+                          onPaymentComplete={() => {
+                            // Refresh application status
+                            fetchApplicationStatus();
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
               </TabsContent>
